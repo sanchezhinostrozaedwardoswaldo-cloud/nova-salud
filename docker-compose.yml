@@ -1,0 +1,42 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: nova-salud-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    networks:
+      - nova-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: nova-salud-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: http://localhost:4000/api
+      HOST: 0.0.0.0
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - nova-network
+
+networks:
+  nova-network:
+    driver: bridge
+
+volumes:
+  backend_node_modules:
+  frontend_node_modules:
