@@ -4,6 +4,8 @@ import Modal from './components/Modal';
 import Categorias from './pages/Categorias';
 import Productos from './pages/Productos';
 import Inventario from './pages/Inventario';
+import Proveedores from './pages/Proveedores';
+import Compras from './pages/Compras';
 import './App.css';
 
 const formularioInicial = {
@@ -219,6 +221,20 @@ function App() {
                 Inventario
               </button>
 
+              <button
+                className={seccion === 'proveedores' ? 'activo' : ''}
+                onClick={() => cambiarSeccion('proveedores')}
+              >
+                Proveedores
+              </button>
+
+              <button
+                className={seccion === 'compras' ? 'activo' : ''}
+                onClick={() => cambiarSeccion('compras')}
+              >
+                Compras
+              </button>
+
               {usuario.rol === 'ADMINISTRADOR' && (
                 <button
                   className={seccion === 'usuarios' ? 'activo' : ''}
@@ -244,7 +260,9 @@ function App() {
                     usuarios: 'Administración de usuarios',
                     categorias: 'Gestión de categorías',
                     productos: 'Gestión de productos',
-                    inventario: 'Inventario farmacéutico'
+                    inventario: 'Inventario farmacéutico',
+                    proveedores: 'Gestión de proveedores',
+                    compras: 'Registro de compras',
                   })[seccion] || 'Panel principal'}
                 </h1>
                 <p>
@@ -296,100 +314,111 @@ function App() {
               />
             ) : seccion === 'inventario' ? (
               <Inventario informar={informar} />
-            ) : seccion === 'usuarios' && usuario.rol === 'ADMINISTRADOR' ? (
-              <>
-                <section className="tarjeta">
-                  <h2>Registrar usuario</h2>
+            ) : seccion === 'proveedores' ? (
+              <Proveedores
+                usuario={usuario}
+                informar={informar}
+                confirmar={confirmar}
+              />
+            ) : seccion === 'compras' ? (
+              <Compras
+                usuario={usuario}
+                informar={informar}
+                confirmar={confirmar}
+              />): seccion === 'usuarios' && usuario.rol === 'ADMINISTRADOR' ? (
+                <>
+                  <section className="tarjeta">
+                    <h2>Registrar usuario</h2>
 
-                  <form className="formulario-grid" onSubmit={crearUsuario}>
-                    {['nombre', 'apellido', 'correo', 'password'].map((campo) => (
-                      <div key={campo}>
-                        <label>
-                          {campo === 'password'
-                            ? 'Contraseña'
-                            : campo.charAt(0).toUpperCase() + campo.slice(1)}
-                        </label>
+                    <form className="formulario-grid" onSubmit={crearUsuario}>
+                      {['nombre', 'apellido', 'correo', 'password'].map((campo) => (
+                        <div key={campo}>
+                          <label>
+                            {campo === 'password'
+                              ? 'Contraseña'
+                              : campo.charAt(0).toUpperCase() + campo.slice(1)}
+                          </label>
 
-                        <input
-                          type={
-                            campo === 'password' ? 'password'
-                              : campo === 'correo' ? 'email' : 'text'
-                          }
-                          value={formulario[campo]}
+                          <input
+                            type={
+                              campo === 'password' ? 'password'
+                                : campo === 'correo' ? 'email' : 'text'
+                            }
+                            value={formulario[campo]}
+                            onChange={(e) =>
+                              setFormulario({
+                                ...formulario,
+                                [campo]: e.target.value
+                              })
+                            }
+                            minLength={campo === 'password' ? 10 : undefined}
+                            required
+                          />
+                        </div>
+                      ))}
+
+                      <div>
+                        <label>Rol</label>
+                        <select
+                          value={formulario.rol}
                           onChange={(e) =>
                             setFormulario({
                               ...formulario,
-                              [campo]: e.target.value
+                              rol: e.target.value
                             })
                           }
-                          minLength={campo === 'password' ? 10 : undefined}
-                          required
-                        />
+                        >
+                          <option value="VENDEDOR">Vendedor</option>
+                          <option value="ADMINISTRADOR">Administrador</option>
+                        </select>
                       </div>
-                    ))}
 
-                    <div>
-                      <label>Rol</label>
-                      <select
-                        value={formulario.rol}
-                        onChange={(e) =>
-                          setFormulario({
-                            ...formulario,
-                            rol: e.target.value
-                          })
-                        }
-                      >
-                        <option value="VENDEDOR">Vendedor</option>
-                        <option value="ADMINISTRADOR">Administrador</option>
-                      </select>
-                    </div>
+                      <div className="formulario-accion">
+                        <button disabled={procesando} type="submit">
+                          {procesando ? 'Guardando...' : 'Crear usuario'}
+                        </button>
+                      </div>
+                    </form>
+                  </section>
 
-                    <div className="formulario-accion">
-                      <button disabled={procesando} type="submit">
-                        {procesando ? 'Guardando...' : 'Crear usuario'}
-                      </button>
-                    </div>
-                  </form>
-                </section>
+                  <section className="tarjeta">
+                    <h2>Usuarios registrados</h2>
 
-                <section className="tarjeta">
-                  <h2>Usuarios registrados</h2>
-
-                  <div className="tabla-contenedor">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Nombre</th>
-                          <th>Correo</th>
-                          <th>Rol</th>
-                          <th>Estado</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {usuarios.map((item) => (
-                          <tr key={item.id}>
-                            <td>{item.nombre} {item.apellido}</td>
-                            <td>{item.correo}</td>
-                            <td>{item.rol}</td>
-                            <td>{item.activo ? 'Activo' : 'Inactivo'}</td>
-                            <td>
-                              <button
-                                className="boton-pequeno"
-                                disabled={item.id === usuario.id}
-                                onClick={() => solicitarCambioEstado(item)}
-                              >
-                                {item.activo ? 'Desactivar' : 'Activar'}
-                              </button>
-                            </td>
+                    <div className="tabla-contenedor">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              </>
-            ) : null}
+                        </thead>
+                        <tbody>
+                          {usuarios.map((item) => (
+                            <tr key={item.id}>
+                              <td>{item.nombre} {item.apellido}</td>
+                              <td>{item.correo}</td>
+                              <td>{item.rol}</td>
+                              <td>{item.activo ? 'Activo' : 'Inactivo'}</td>
+                              <td>
+                                <button
+                                  className="boton-pequeno"
+                                  disabled={item.id === usuario.id}
+                                  onClick={() => solicitarCambioEstado(item)}
+                                >
+                                  {item.activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </>
+              ) : null}
           </main>
         </div>
       )}

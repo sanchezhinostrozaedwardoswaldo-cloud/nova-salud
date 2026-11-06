@@ -274,3 +274,74 @@ th { color: #657981; font-size: 13px; }
     max-width: none;
   }
 }
+
+.compra-detalle {
+  border: 1px solid #e1e9eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 18px 0;
+  background: #f9fbfc;
+}
+
+.compra-detalle-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.compra-detalle-titulo h3 {
+  margin: 0;
+}
+
+.compra-subtotal {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.compra-subtotal span,
+.compra-total span {
+  color: #657981;
+  font-size: 13px;
+}
+
+.compra-subtotal strong {
+  font-size: 20px;
+  color: #087d63;
+}
+
+.compra-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin: 24px 0;
+}
+
+.compra-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.compra-total strong {
+  color: #087d63;
+  font-size: 28px;
+}
+
+@media (max-width: 800px) {
+  .compra-pie,
+  .compra-detalle-titulo {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .compra-total {
+    align-items: flex-start;
+  }
+}
