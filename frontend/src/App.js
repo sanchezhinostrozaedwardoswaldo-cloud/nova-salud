@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from './services/api';
 import Modal from './components/Modal';
+import Categorias from './pages/Categorias';
+import Productos from './pages/Productos';
+import Inventario from './pages/Inventario';
 import './App.css';
 
 const formularioInicial = {
@@ -24,6 +27,18 @@ function App() {
 
   const informar = (titulo, mensaje) => {
     setModal({ titulo, mensaje });
+  };
+
+  const confirmar = (titulo, mensaje, onConfirmar) => {
+    setModal({
+      titulo,
+      mensaje,
+      confirmar: true,
+      onConfirmar: async () => {
+        setModal(null);
+        await onConfirmar();
+      }
+    });
   };
 
   useEffect(() => {
@@ -183,6 +198,26 @@ function App() {
               >
                 Dashboard
               </button>
+              <button
+                className={seccion === 'categorias' ? 'activo' : ''}
+                onClick={() => cambiarSeccion('categorias')}
+              >
+                Categorías
+              </button>
+
+              <button
+                className={seccion === 'productos' ? 'activo' : ''}
+                onClick={() => cambiarSeccion('productos')}
+              >
+                Productos
+              </button>
+
+              <button
+                className={seccion === 'inventario' ? 'activo' : ''}
+                onClick={() => cambiarSeccion('inventario')}
+              >
+                Inventario
+              </button>
 
               {usuario.rol === 'ADMINISTRADOR' && (
                 <button
@@ -204,9 +239,13 @@ function App() {
             <header className="cabecera">
               <div>
                 <h1>
-                  {seccion === 'dashboard'
-                    ? 'Panel principal'
-                    : 'Administración de usuarios'}
+                  {({
+                    dashboard: 'Panel principal',
+                    usuarios: 'Administración de usuarios',
+                    categorias: 'Gestión de categorías',
+                    productos: 'Gestión de productos',
+                    inventario: 'Inventario farmacéutico'
+                  })[seccion] || 'Panel principal'}
                 </h1>
                 <p>
                   Bienvenido, {usuario.nombre} {usuario.apellido}
@@ -243,7 +282,21 @@ function App() {
                   </article>
                 </div>
               </>
-            ) : usuario.rol === 'ADMINISTRADOR' ? (
+            ) : seccion === 'categorias' ? (
+              <Categorias
+                usuario={usuario}
+                informar={informar}
+                confirmar={confirmar}
+              />
+            ) : seccion === 'productos' ? (
+              <Productos
+                usuario={usuario}
+                informar={informar}
+                confirmar={confirmar}
+              />
+            ) : seccion === 'inventario' ? (
+              <Inventario informar={informar} />
+            ) : seccion === 'usuarios' && usuario.rol === 'ADMINISTRADOR' ? (
               <>
                 <section className="tarjeta">
                   <h2>Registrar usuario</h2>
