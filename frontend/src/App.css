@@ -345,3 +345,32 @@ th { color: #657981; font-size: 13px; }
     align-items: flex-start;
   }
 }
+
+.venta-dato {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.venta-dato span {
+  font-size: 13px;
+  color: #657981;
+}
+
+.venta-dato strong {
+  font-size: 18px;
+  color: #087d63;
+}
+
+.venta-total-detalle {
+  margin-top: 20px;
+  padding: 16px;
+  background: #e0f5ef;
+  border-radius: 10px;
+  text-align: right;
+  color: #087d63;
+  font-size: 22px;
+  font-weight: bold;
+}
