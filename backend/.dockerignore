@@ -1,9 +1,10 @@
 node_modules
-.git
+npm-debug.log
 .env
 .env.*
-!.env.example
-build
-dist
+.git
+.gitignore
+Dockerfile
+Dockerfile.prod
+README.md
 coverage
-npm-debug.log
