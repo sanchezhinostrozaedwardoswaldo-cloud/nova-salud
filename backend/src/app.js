@@ -7,6 +7,14 @@ const routes = require('./routes');
 
 const app = express();
 
+app.get('/healthz', (req, res) => {
+  res.status(200).json({
+    success: true,
+    service: 'Nova Salud API',
+    status: 'healthy'
+  });
+});
+
 app.disable('x-powered-by');
 app.use(helmet());
 
