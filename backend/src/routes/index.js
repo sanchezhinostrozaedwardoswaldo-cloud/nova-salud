@@ -11,6 +11,10 @@ const proveedoresRoutes = require('./proveedores.routes');
 const comprasRoutes = require('./compras.routes');
 const clientesRoutes = require('./clientes.routes');
 const ventasRoutes = require('./ventas.routes');
+const reportesRoutes = require('./reportes.routes');
+const operacionesInventarioRoutes = require(
+  './operaciones-inventario.routes'
+);
 
 router.get('/health', healthController.getHealth);
 
@@ -23,5 +27,10 @@ router.use('/proveedores', proveedoresRoutes);
 router.use('/compras', comprasRoutes);
 router.use('/clientes', clientesRoutes);
 router.use('/ventas', ventasRoutes);
+router.use('/reportes', reportesRoutes);
+router.use(
+  '/operaciones-inventario',
+  operacionesInventarioRoutes
+);
 
 module.exports = router;

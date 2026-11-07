@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import AnularOperacion from '../components/AnularOperacion';
+import DetalleModal from '../components/DetalleModal';
 
 const detalleInicial = () => ({
   producto_id: '',
@@ -333,7 +335,7 @@ export default function Compras({ usuario, informar, confirmar }) {
                       </div>
 
                       <div className="compra-subtotal">
-                        <span>Subtotal</span>
+                        <span>Subtotal: </span>
                         <strong>
                           {formatoMoneda(
                             Math.round(Number(item.precio_unitario || 0) * 100) *
@@ -349,13 +351,14 @@ export default function Compras({ usuario, informar, confirmar }) {
                   <button
                     type="button"
                     className="boton-secundario"
+                    id="agregar-medicamento"
                     onClick={agregarDetalle}
                   >
                     + Agregar medicamento
                   </button>
 
                   <div className="compra-total">
-                    <span>Total de compra</span>
+                    <span>Total de compra: </span>
                     <strong>{formatoMoneda(total)}</strong>
                   </div>
                 </div>
@@ -394,12 +397,28 @@ export default function Compras({ usuario, informar, confirmar }) {
                       <td>{formatoMoneda(compra.total)}</td>
                       <td>{compra.estado}</td>
                       <td>
-                        <button
-                          className="boton-pequeno"
-                          onClick={() => verDetalle(compra.id)}
-                        >
-                          Ver detalle
-                        </button>
+                        <div className="operaciones-tabla">
+                          <button
+                            type="button"
+                            className="boton-pequeno"
+                            onClick={() => verDetalle(compra.id)}
+                          >
+                            Ver detalle
+                          </button>
+
+                          {administrador && compra.estado === 'REGISTRADA' && (
+                            <AnularOperacion
+                              tipo="compra"
+                              registro={compra}
+                              confirmar={confirmar}
+                              informar={informar}
+                              alCompletar={async () => {
+                                setCompraSeleccionada(null);
+                                await cargar();
+                              }}
+                            />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -408,51 +427,7 @@ export default function Compras({ usuario, informar, confirmar }) {
             </div>
           </section>
 
-          {compraSeleccionada && (
-            <section className="tarjeta">
-              <div className="compra-detalle-titulo">
-                <h3>Detalle de compra #{compraSeleccionada.id}</h3>
-                <button
-                  className="boton-secundario"
-                  onClick={() => setCompraSeleccionada(null)}
-                >
-                  Cerrar detalle
-                </button>
-              </div>
 
-              <p>
-                Proveedor: {compraSeleccionada.proveedor?.razon_social}
-              </p>
-
-              <div className="tabla-contenedor">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Medicamento</th>
-                      <th>Lote</th>
-                      <th>Vencimiento</th>
-                      <th>Cantidad</th>
-                      <th>Precio</th>
-                      <th>Subtotal</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {(compraSeleccionada.detalles || []).map((item) => (
-                      <tr key={item.id}>
-                        <td>{item.lote?.producto?.nombre}</td>
-                        <td>{item.lote?.numero_lote}</td>
-                        <td>{item.lote?.fecha_vencimiento}</td>
-                        <td>{item.cantidad}</td>
-                        <td>{formatoMoneda(item.precio_unitario)}</td>
-                        <td>{formatoMoneda(item.subtotal)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
         </>
       )}
 
@@ -480,7 +455,16 @@ export default function Compras({ usuario, informar, confirmar }) {
                     <td>{movimiento.lote?.producto?.nombre}</td>
                     <td>{movimiento.lote?.numero_lote}</td>
                     <td>{movimiento.tipo}</td>
-                    <td>{movimiento.cantidad}</td>
+                    <td
+                      className={
+                        Number(movimiento.cantidad) >= 0
+                          ? 'movimiento-positivo'
+                          : 'movimiento-negativo'
+                      }
+                    >
+                      {Number(movimiento.cantidad) > 0 ? '+' : ''}
+                      {movimiento.cantidad}
+                    </td>
                     <td>{movimiento.stock_anterior}</td>
                     <td>{movimiento.stock_nuevo}</td>
                     <td>{movimiento.motivo}</td>
@@ -491,6 +475,71 @@ export default function Compras({ usuario, informar, confirmar }) {
           </div>
         </section>
       )}
+
+      <DetalleModal
+        abierto={Boolean(compraSeleccionada)}
+        titulo={
+          compraSeleccionada
+            ? `Detalle de compra #${compraSeleccionada.id}`
+            : ''
+        }
+        subtitulo="Información de la compra y sus lotes"
+        onCerrar={() => setCompraSeleccionada(null)}
+      >
+        {compraSeleccionada && (
+          <>
+            <div className="detalle-modal-datos">
+              <span>
+                <strong>Proveedor: </strong>
+                {compraSeleccionada.proveedor?.razon_social || 'No disponible'}
+              </span>
+
+              <span>
+                <strong>Estado: </strong>
+                {compraSeleccionada.estado}
+              </span>
+
+              <span>
+                <strong>Documento: </strong>
+                {compraSeleccionada.numero_documento || 'Sin documento'}
+              </span>
+            </div>
+
+            <div className="tabla-contenedor">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Medicamento</th>
+                    <th>Lote</th>
+                    <th>Vencimiento</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {(compraSeleccionada.detalles || []).map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.lote?.producto?.nombre}</td>
+                      <td>{item.lote?.numero_lote}</td>
+                      <td>{item.lote?.fecha_vencimiento}</td>
+                      <td>{item.cantidad}</td>
+                      <td>{formatoMoneda(item.precio_unitario)}</td>
+                      <td>{formatoMoneda(item.subtotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="detalle-modal-total">
+              Total: {formatoMoneda(compraSeleccionada.total)}
+            </div>
+          </>
+        )}
+      </DetalleModal>
+
     </div>
   );
 }

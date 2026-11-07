@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
+import AnularOperacion from '../components/AnularOperacion';
+import DetalleModal from '../components/DetalleModal';
 
 const nuevaLinea = () => ({
   producto_id: '',
@@ -9,7 +11,11 @@ const nuevaLinea = () => ({
 const moneda = (valor) =>
   `S/ ${Number(valor || 0).toFixed(2)}`;
 
-export default function Ventas({ informar, confirmar }) {
+export default function Ventas({
+  usuario,
+  informar,
+  confirmar
+}) {
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
   const [ventas, setVentas] = useState([]);
@@ -19,6 +25,7 @@ export default function Ventas({ informar, confirmar }) {
   const [guardando, setGuardando] = useState(false);
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [buscar, setBuscar] = useState('');
+  const administrador = usuario?.rol === 'ADMINISTRADOR';
 
   async function cargar() {
     try {
@@ -230,14 +237,14 @@ export default function Ventas({ informar, confirmar }) {
             </div>
           </div>
 
-          <h3>Medicamentos de la venta</h3>
+          <h3 id="medicamento-venta">Medicamentos de la venta</h3>
 
           {detalles.map((item, indice) => {
             const producto = obtenerProducto(item.producto_id);
 
             const subtotal = producto
               ? Number(producto.precio_venta) *
-                Number(item.cantidad || 0)
+              Number(item.cantidad || 0)
               : 0;
 
             return (
@@ -298,14 +305,14 @@ export default function Ventas({ informar, confirmar }) {
                   </div>
 
                   <div className="venta-dato">
-                    <span>Stock disponible</span>
+                    <span>Stock disponible: </span>
                     <strong>
                       {producto ? producto.stock_disponible : '—'}
                     </strong>
                   </div>
 
                   <div className="venta-dato">
-                    <span>Precio de venta</span>
+                    <span>Precio de venta: </span>
                     <strong>
                       {producto
                         ? moneda(producto.precio_venta)
@@ -314,7 +321,7 @@ export default function Ventas({ informar, confirmar }) {
                   </div>
 
                   <div className="venta-dato">
-                    <span>Subtotal estimado</span>
+                    <span>Subtotal estimado: </span>
                     <strong>{moneda(subtotal)}</strong>
                   </div>
                 </div>
@@ -326,13 +333,14 @@ export default function Ventas({ informar, confirmar }) {
             <button
               type="button"
               className="boton-secundario"
+              id="agregar-medicamento"
               onClick={agregarLinea}
             >
               + Agregar medicamento
             </button>
 
             <div className="compra-total">
-              <span>Total estimado</span>
+              <span>Total estimado: </span>
               <strong>{moneda(totalEstimado)}</strong>
             </div>
           </div>
@@ -389,12 +397,28 @@ export default function Ventas({ informar, confirmar }) {
                   <td>{moneda(venta.total)}</td>
                   <td>{venta.estado}</td>
                   <td>
-                    <button
-                      className="boton-pequeno"
-                      onClick={() => verDetalle(venta.id)}
-                    >
-                      Ver detalle
-                    </button>
+                    <div className="operaciones-tabla">
+                      <button
+                        type="button"
+                        className="boton-pequeno"
+                        onClick={() => verDetalle(venta.id)}
+                      >
+                        Ver detalle
+                      </button>
+
+                      {administrador && venta.estado === 'COMPLETADA' && (
+                        <AnularOperacion
+                          tipo="venta"
+                          registro={venta}
+                          confirmar={confirmar}
+                          informar={informar}
+                          alCompletar={async () => {
+                            setVentaSeleccionada(null);
+                            await cargar();
+                          }}
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -409,56 +433,71 @@ export default function Ventas({ informar, confirmar }) {
         </div>
       </section>
 
-      {ventaSeleccionada && (
-        <section className="tarjeta">
-          <div className="compra-detalle-titulo">
-            <h3>Detalle de venta #{ventaSeleccionada.id}</h3>
 
-            <button
-              className="boton-secundario"
-              onClick={() => setVentaSeleccionada(null)}
-            >
-              Cerrar detalle
-            </button>
-          </div>
+      <DetalleModal
+        abierto={Boolean(ventaSeleccionada)}
+        titulo={
+          ventaSeleccionada
+            ? `Detalle de venta #${ventaSeleccionada.id}`
+            : ''
+        }
+        subtitulo="Medicamentos vendidos y lotes utilizados"
+        onCerrar={() => setVentaSeleccionada(null)}
+      >
+        {ventaSeleccionada && (
+          <>
+            <div className="detalle-modal-datos">
+              <span>
+                <strong>Método de pago: </strong>
+                {ventaSeleccionada.metodo_pago}
+              </span>
 
-          <p>
-            Método de pago: {ventaSeleccionada.metodo_pago}
-          </p>
+              <span>
+                <strong>Estado: </strong>
+                {ventaSeleccionada.estado}
+              </span>
 
-          <div className="tabla-contenedor">
-            <table>
-              <thead>
-                <tr>
-                  <th>Medicamento</th>
-                  <th>Lote utilizado</th>
-                  <th>Vencimiento</th>
-                  <th>Cantidad</th>
-                  <th>Precio</th>
-                  <th>Subtotal</th>
-                </tr>
-              </thead>
+              <span>
+                <strong>Venta: </strong>
+                #{ventaSeleccionada.id}
+              </span>
+            </div>
 
-              <tbody>
-                {(ventaSeleccionada.detalles || []).map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.lote?.producto?.nombre}</td>
-                    <td>{item.lote?.numero_lote}</td>
-                    <td>{item.lote?.fecha_vencimiento}</td>
-                    <td>{item.cantidad}</td>
-                    <td>{moneda(item.precio_unitario)}</td>
-                    <td>{moneda(item.subtotal)}</td>
+            <div className="tabla-contenedor">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Medicamento</th>
+                    <th>Lote utilizado</th>
+                    <th>Vencimiento</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
 
-          <div className="venta-total-detalle">
-            Total: {moneda(ventaSeleccionada.total)}
-          </div>
-        </section>
-      )}
+                <tbody>
+                  {(ventaSeleccionada.detalles || []).map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.lote?.producto?.nombre}</td>
+                      <td>{item.lote?.numero_lote}</td>
+                      <td>{item.lote?.fecha_vencimiento}</td>
+                      <td>{item.cantidad}</td>
+                      <td>{moneda(item.precio_unitario)}</td>
+                      <td>{moneda(item.subtotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="detalle-modal-total">
+              Total: {moneda(ventaSeleccionada.total)}
+            </div>
+          </>
+        )}
+      </DetalleModal>
+
     </div>
   );
 }
